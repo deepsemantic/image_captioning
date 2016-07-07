@@ -1,0 +1,148 @@
+name: "caffenet_to_lstm"
+
+input: "cont_sentence_forward"
+input_shape { dim: 1 dim: 1000 }
+
+input: "input_sentence_forward"
+input_shape { dim: 1 dim: 1000 }
+
+input: "cont_sentence_backward"
+input_shape { dim: 1 dim: 1000 }
+
+input: "input_sentence_backward"
+input_shape { dim: 1 dim: 1000 }
+
+input: "image_features"
+input_shape { dim: 1000 dim: 1000 }
+
+#textual part training in forward stream
+layer {
+  name: "embedding_forward"
+  type: "Embed"
+  bottom: "input_sentence_forward"
+  top: "embedded_input_sentence_forward"
+  embed_param {
+    bias_term: false
+    input_dim: 2029
+    num_output: 1000
+  }
+}
+layer {
+  name: "lstm1_forward"
+  type: "LSTM"
+  bottom: "embedded_input_sentence_forward"
+  bottom: "cont_sentence_forward"
+  #bottom: "image_features"
+  top: "lstm1_forward"
+  recurrent_param {num_output: 1000 }
+}
+
+#textual part training in backward stream
+layer {
+  name: "embedding_backward"
+  type: "Embed"
+  bottom: "input_sentence_backward"
+  top: "embedded_input_sentence_backward"
+  embed_param {
+    bias_term: false
+    input_dim: 2029
+    num_output: 1000
+  }
+}
+layer {
+  name: "lstm1_backward"
+  type: "LSTM"
+  bottom: "embedded_input_sentence_backward"
+  bottom: "cont_sentence_backward"
+  #bottom: "image_features"
+  top: "lstm1_backward"
+  recurrent_param {num_output: 1000}
+}
+
+layer {
+  name: "lstm2_forward"
+  type: "LSTM"
+  bottom: "lstm1_forward"
+  bottom: "cont_sentence_forward"
+  bottom: "image_features"
+  top: "lstm2_forward"
+  recurrent_param {num_output: 1000}
+}
+layer {
+  name: "lstm2_forward_drop"
+  type: "Dropout"
+  bottom: "lstm2_forward"
+  top: "lstm2_forward"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "lstm2_backward"
+  type: "LSTM"
+  bottom: "lstm1_backward"
+  bottom: "cont_sentence_backward"
+  bottom: "image_features"
+  top: "lstm2_backward"
+  recurrent_param {num_output: 1000}
+}
+layer {
+  name: "lstm2_backward_drop"
+  type: "Dropout"
+  bottom: "lstm2_backward"
+  top: "lstm2_backward"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "predict_forward"
+  type: "InnerProduct"
+  bottom: "lstm2_forward"
+  top: "predict_forward"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2029
+    axis: 2
+  }
+}
+layer {
+  name: "predict_backward"
+  type: "InnerProduct"
+  bottom: "lstm2_backward"
+  top: "predict_backward"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2029
+    axis: 2
+  }
+}
+
+layer {
+  name: "probs_forward"
+  type: "Softmax"
+  bottom: "predict_forward"
+  top: "probs_forward"
+  softmax_param { axis: 2 }
+}
+layer {
+  name: "probs_backward"
+  type: "Softmax"
+  bottom: "predict_backward"
+  top: "probs_backward"
+  softmax_param { axis: 2 }
+}

@@ -1,0 +1,735 @@
+# The network is used for the image captioning experiments in [1].
+#
+#  [1] Cheng Wang, Haojin Yang, Christian Bartz, Christoph Meinel,
+#      "Image Captioning with Deep Bidirectional LSTMs",http://arxiv.org/abs/1604.00790
+
+# where we extend the work in [2] with on-line data augumentions (multi-crop, multi-scale and vertical miroring) and bidirectional learning.
+#
+# [2] J. Donahue, L. A. Hendricks, S. Guadarrama, M. Rohrbach, S. Venugopalan,
+#     K. Saenko, T. Darrell. "Long-term Recurrent Convolutional Networks for
+#     Visual Recognition and Description." arXiv preprint arXiv:1411.4389 (2014).
+
+name: "Bi-F-LSTM"
+
+# train data layers
+##load image data
+layer {
+  name: "data"
+  type: "ImageData"
+  top: "data"
+  top: "label"
+  include { phase: TRAIN}
+  transform_param {
+    mirror: true
+    multi_crop:true
+    multi_scale:true
+    mirror_vertical:true
+    crop_size: 227
+    mean_value: 104
+    mean_value: 117
+    mean_value: 123
+  }
+  image_data_param {
+    source: "./examples/flickr8K/h5_data_forward/buffer_150/train_aligned_20_batches/image_list.with_dummy_labels.txt"
+    batch_size: 150
+    new_height: 256
+    new_width: 256
+  }
+}
+
+#load forward sentence in train stage
+layer {
+  name: "data_forward"
+  type: "HDF5Data"
+  top: "cont_sentence_forward"
+  top: "input_sentence_forward"
+  top: "target_sentence_forward"
+  include { phase: TRAIN}
+  hdf5_data_param {
+    source: "./examples/flickr8K/h5_data_forward/buffer_150/train_aligned_20_batches/hdf5_chunk_list.txt"
+    batch_size: 20
+  }
+}
+#load backward sentence in train stage
+layer {
+  name: "data_backward"
+  type: "HDF5Data"
+  top: "cont_sentence_backward"
+  top: "input_sentence_backward"
+  top: "target_sentence_backward"
+  include { phase: TRAIN}
+  hdf5_data_param {
+    source: "./examples/flickr8K/h5_data_backward/buffer_150/train_aligned_20_batches/hdf5_chunk_list.txt"
+    batch_size: 20
+  }
+}
+
+# test on val data layers
+layer {
+  name: "data"
+  type: "ImageData"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    mirror: true
+    crop_size: 227
+    mean_value: 104
+    mean_value: 117
+    mean_value: 123
+  }
+  image_data_param {
+    source: "./examples/flickr8K/h5_data_forward/buffer_150/val_aligned_20_batches/image_list.with_dummy_labels.txt"
+    batch_size: 150
+    new_height: 256
+    new_width: 256
+  }
+}
+
+
+#load forward sentence in val stage
+layer {
+  name: "data_forward"
+  type: "HDF5Data"
+  top: "cont_sentence_forward"
+  top: "input_sentence_forward"
+  top: "target_sentence_forward"
+  include {
+    phase: TEST
+  }
+  hdf5_data_param {
+    source: "./examples/flickr8K/h5_data_forward/buffer_150/val_aligned_20_batches/hdf5_chunk_list.txt"
+    batch_size: 20
+  }
+}
+
+#load backward sentence in val stage
+layer {
+  name: "data_backward"
+  type: "HDF5Data"
+  top: "cont_sentence_backward"
+  top: "input_sentence_backward"
+  top: "target_sentence_backward"
+  include {
+    phase: TEST
+  }
+  hdf5_data_param {
+    source: "./examples/flickr8K/h5_data_backward/buffer_150/val_aligned_20_batches/hdf5_chunk_list.txt"
+    batch_size: 20
+  }
+}
+layer {
+  name: "silence"
+  type: "Silence"
+  bottom: "label"
+}
+layer {
+  name: "conv1"
+  type: "Convolution"
+  bottom: "data"
+  top: "conv1"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  convolution_param {
+    num_output: 96
+    kernel_size: 11
+    stride: 4
+  }
+}
+layer {
+  name: "relu1"
+  type: "ReLU"
+  bottom: "conv1"
+  top: "conv1"
+}
+layer {
+  name: "pool1"
+  type: "Pooling"
+  bottom: "conv1"
+  top: "pool1"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  name: "norm1"
+  type: "LRN"
+  bottom: "pool1"
+  top: "norm1"
+  lrn_param {
+    local_size: 5
+    alpha: 0.0001
+    beta: 0.75
+  }
+}
+layer {
+  name: "conv2"
+  type: "Convolution"
+  bottom: "norm1"
+  top: "conv2"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad: 2
+    kernel_size: 5
+    group: 2
+  }
+}
+layer {
+  name: "relu2"
+  type: "ReLU"
+  bottom: "conv2"
+  top: "conv2"
+}
+layer {
+  name: "pool2"
+  type: "Pooling"
+  bottom: "conv2"
+  top: "pool2"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  name: "norm2"
+  type: "LRN"
+  bottom: "pool2"
+  top: "norm2"
+  lrn_param {
+    local_size: 5
+    alpha: 0.0001
+    beta: 0.75
+  }
+}
+layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "norm2"
+  top: "conv3"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  convolution_param {
+    num_output: 384
+    pad: 1
+    kernel_size: 3
+  }
+}
+layer {
+  name: "relu3"
+  type: "ReLU"
+  bottom: "conv3"
+  top: "conv3"
+}
+layer {
+  name: "conv4"
+  type: "Convolution"
+  bottom: "conv3"
+  top: "conv4"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  convolution_param {
+    num_output: 384
+    pad: 1
+    kernel_size: 3
+    group: 2
+  }
+}
+layer {
+  name: "relu4"
+  type: "ReLU"
+  bottom: "conv4"
+  top: "conv4"
+}
+layer {
+  name: "conv5"
+  type: "Convolution"
+  bottom: "conv4"
+  top: "conv5"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  convolution_param {
+    num_output: 256
+    pad: 1
+    kernel_size: 3
+    group: 2
+  }
+}
+layer {
+  name: "relu5"
+  type: "ReLU"
+  bottom: "conv5"
+  top: "conv5"
+}
+layer {
+  name: "pool5"
+  type: "Pooling"
+  bottom: "conv5"
+  top: "pool5"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+
+layer {
+  name: "fc6"
+  type: "InnerProduct"
+  bottom: "pool5"
+  top: "fc6"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  inner_product_param {
+    num_output: 4096
+  }
+}
+layer {
+  name: "relu6"
+  type: "ReLU"
+  bottom: "fc6"
+  top: "fc6"
+}
+layer {
+  name: "drop6"
+  type: "Dropout"
+  bottom: "fc6"
+  top: "fc6"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "fc7"
+  type: "InnerProduct"
+  bottom: "fc6"
+  top: "fc7"
+  param {
+    lr_mult: 0
+  }
+  param {
+    lr_mult: 0
+  }
+  inner_product_param {
+    num_output: 4096
+  }
+}
+layer {
+  name: "relu7"
+  type: "ReLU"
+  bottom: "fc7"
+  top: "fc7"
+}
+layer {
+  name: "drop7"
+  type: "Dropout"
+  bottom: "fc7"
+  top: "fc7"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "fc8"
+  type: "InnerProduct"
+  bottom: "fc7"
+  top: "fc8"
+  param {
+    lr_mult: 0.1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 0.2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 1000
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+#textual part training in forward stream
+layer {
+  name: "embedding_forward"
+  type: "Embed"
+  bottom: "input_sentence_forward"
+  top: "embedded_input_sentence_forward"
+  param {
+    lr_mult: 1
+  }
+  embed_param {
+    bias_term: false
+    input_dim: 2029
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+  }
+}
+layer {
+  name: "lstm1_forward"
+  type: "LSTM"
+  bottom: "embedded_input_sentence_forward"
+  bottom: "cont_sentence_forward"
+  top: "lstm1_forward"
+  
+  recurrent_param {
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "dt_forward"
+  type: "InnerProduct"
+  bottom: "lstm1_forward"
+  top: "dt_forward"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+    axis: 2
+  }
+}
+layer {
+  name: "relu_forward"
+  type: "ReLU"
+  bottom: "dt_forward"
+  top: "dt_forward"
+}
+layer {
+  name: "dt_forward_drop"
+  type: "Dropout"
+  bottom: "dt_forward"
+  top: "dt_forward"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "concat_lstm1_dt_forward"
+  type: "Concat"
+  bottom: "lstm1_forward"
+  bottom: "dt_forward"
+  top: "concat_lstm1_dt_forward"
+  concat_param{ concat_dim: 2}
+}
+layer {
+  name: "lstm2_forward"
+  type: "LSTM"
+  bottom: "concat_lstm1_dt_forward"
+  bottom: "cont_sentence_forward"
+  bottom: "fc8" ##instead of fc8
+  top: "lstm2_forward"
+  recurrent_param {
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "lstm2_forward_drop"
+  type: "Dropout"
+  bottom: "lstm2_forward"
+  top: "lstm2_forward"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+#textual part training in backward stream
+layer {
+  name: "embedding_backward"
+  type: "Embed"
+  bottom: "input_sentence_backward"
+  top: "embedded_input_sentence_backward"
+  param {
+    lr_mult: 1
+  }
+  embed_param {
+    bias_term: false
+    input_dim: 2029
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+  }
+}
+layer {
+  name: "lstm1_backward"
+  type: "LSTM"
+  bottom: "embedded_input_sentence_backward"
+  bottom: "cont_sentence_backward"
+  top: "lstm1_backward"
+  recurrent_param {
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "dt_backward"
+  type: "InnerProduct"
+  bottom: "lstm1_backward"
+  top: "dt_backward"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+    axis: 2
+  }
+}
+layer {
+  name: "relu_backward"
+  type: "ReLU"
+  bottom: "dt_backward"
+  top: "dt_backward"
+}
+layer {
+  name: "dt_backward_drop"
+  type: "Dropout"
+  bottom: "dt_backward"
+  top: "dt_backward"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
+  name: "concat_lstm1_dt_backward"
+  type: "Concat"
+  bottom: "lstm1_backward"
+  bottom: "dt_backward"
+  top: "concat_lstm1_dt_backward"
+  concat_param{ concat_dim: 2}
+}
+
+layer {
+  name: "lstm2_backward"
+  type: "LSTM"
+  bottom: "concat_lstm1_dt_backward"
+  bottom: "cont_sentence_backward"
+  bottom: "fc8" ##instead of fc8
+  top: "lstm2_backward"
+  recurrent_param {
+    num_output: 1000
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "lstm2_backward_drop"
+  type: "Dropout"
+  bottom: "lstm2_backward"
+  top: "lstm2_backward"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+layer {
+  name: "predict_forward"
+  type: "InnerProduct"
+  bottom: "lstm2_forward"
+  top: "predict_forward"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2029
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+    axis: 2
+  }
+}
+
+layer {
+  name: "predict_backward"
+  type: "InnerProduct"
+  bottom: "lstm2_backward"
+  top: "predict_backward"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2029
+    weight_filler {
+      type: "uniform"
+      min: -0.08
+      max: 0.08
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+    axis: 2
+  }
+}
+layer {
+  name: "softmax_loss_forward"
+  type: "SoftmaxWithLoss"
+  bottom: "predict_forward"
+  bottom: "target_sentence_forward"
+  top: "softmax_loss_forward"
+  loss_weight: 20
+  loss_param {
+    ignore_label: -1
+  }
+  softmax_param {
+    axis: 2
+  }
+}
+layer {
+  name: "softmax_loss_backward"
+  type: "SoftmaxWithLoss"
+  bottom: "predict_backward"
+  bottom: "target_sentence_backward"
+  top: "softmax_loss_backward"
+  loss_weight: 20
+  loss_param {
+    ignore_label: -1
+  }
+  softmax_param {
+    axis: 2
+  }
+}
+
+layer {
+  name: "accuracy_forward"
+  type: "Accuracy"
+  bottom: "predict_forward"
+  bottom: "target_sentence_forward"
+  top: "accuracy_forward"
+  #include { phase: TEST }
+  accuracy_param {
+    axis: 2
+    ignore_label: -1
+  }
+}
+layer {
+  name: "accuracy_backward"
+  type: "Accuracy"
+  bottom: "predict_backward"
+  bottom: "target_sentence_backward"
+  top: "accuracy_backward"
+  #include { phase: TEST }
+  accuracy_param {
+    axis: 2
+    ignore_label: -1
+  }
+}
