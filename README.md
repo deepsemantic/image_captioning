@@ -25,6 +25,7 @@ Please cite Caffe in your publications if it helps your research:
     journal={arXiv preprint arXiv:1604.00790},
     url={http://arxiv.org/abs/1604.00790}
     year={2016}
+    }
 ----
 Following is orginal README of Caffe
 # Caffe
