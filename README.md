@@ -1,6 +1,6 @@
 # Image Captioning with Deep Bidirectional LSTMs
 
-This branch hosts the code for our paper accepted at ACMMM 2016 ["Image Captioning with Deep Bidirectional LSTMs"](http://arxiv.org/abs/1604.00790).
+This branch hosts the code for our paper accepted at ACMMM 2016 ["Image Captioning with Deep Bidirectional LSTMs"](http://arxiv.org/abs/1604.00790), to see [Demonstration](https://youtu.be/a0bh9_2LE24)
 
 ### Features 
  - Training with Bidirectional LSTMs
