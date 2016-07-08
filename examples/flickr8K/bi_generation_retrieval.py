@@ -280,7 +280,8 @@ class CaptionExperiment():
     print 'Compute the final caption according to forward and backward order.. '
     for cap_f, cap_b, pros_f, pros_b in zip(all_captions_forward,all_captions_backward,output_probs_forward,output_probs_backward):
         #print sum(pros_f), ' ',sum(pros_b)
-        if sum(pros_f)>sum(pros_b):
+        if np.mean(pros_f)>np.mean(pros_b):
+        #if sum(pros_f)>sum(pros_b):
             all_captions_final[cap_index]=cap_f
         else:
             #pdb.set_trace()
