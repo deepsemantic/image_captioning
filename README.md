@@ -17,7 +17,7 @@ This branch hosts the code for our paper accepted at ACMMM 2016 ["Image Captioni
  
 ### Citation
 
-Please cite Caffe in your publications if it helps your research:
+Please cite in your publications if it helps your research:
 
     @article{wang2016image,
     title={Image Captioning with Deep Bidirectional LSTMs},
