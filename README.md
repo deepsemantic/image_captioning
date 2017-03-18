@@ -9,7 +9,7 @@ This branch hosts the code for our paper accepted at ACMMM 2016 ["Image Captioni
 
 ### Usage and Example 
  - This work extends ["Long-term Recurrent Convolutional Networks (LRCN)"](http://jeffdonahue.com/lrcn/) to bidirectional LSTMs with data augmentation
- - We provide an example (flickr8K), in which you can train proposed networks
+ - We provide an example [flickr8K](http://nlp.cs.illinois.edu/HockenmaierGroup/8k-pictures.html), in which you can train proposed networks
  - (1) download flickr8 training and test images, and put it to "data/flickr8K/images/", the dataset splits can be found in "data/flickr8K/texts/"
  - (2) create databases with "flickr8K_to_hdf5_data_forward.py" and "flickr8K_to_hdf5_data_backward.py" 
  - (3) train network with "multi_train_Bi_LSTM.sh"
@@ -17,7 +17,7 @@ This branch hosts the code for our paper accepted at ACMMM 2016 ["Image Captioni
  
 ### Citation
 
-Please cite Caffe in your publications if it helps your research:
+Please cite in your publications if it helps your research:
 
     @article{wang2016image,
     title={Image Captioning with Deep Bidirectional LSTMs},
