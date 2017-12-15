@@ -20,13 +20,14 @@ Recently, we deployed the image captioning system to mobile device, find demo [h
 
 Please cite in your publications if it helps your research:
 
-    @article{wang2016image,
-    title={Image Captioning with Deep Bidirectional LSTMs},
-    author={Wang, Cheng and Yang, Haojin and Bartz, Christian and Meinel, Christoph},
-    journal={arXiv preprint arXiv:1604.00790},
-    url={http://arxiv.org/abs/1604.00790}
-    year={2016}
-    }
+  @inproceedings{wang2016image,  
+  title={Image captioning with deep bidirectional LSTMs},  
+  author={Wang, Cheng and Yang, Haojin and Bartz, Christian and Meinel, Christoph},  
+  booktitle={Proceedings of the 2016 ACM on Multimedia Conference},  
+  pages={988--997},  
+  year={2016},  
+  organization={ACM}  
+  }
 ----
 Following is orginal README of Caffe
 # Caffe
