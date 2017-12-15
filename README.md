@@ -18,7 +18,7 @@ Recently, we deployed the image captioning system to mobile device, find demo [h
  
 ### Citation
 
-Please cite in your publications if it helps your research:
+Please cite in your publications if it helps your research:  
    @inproceedings{wang2016image,  
    title={Image captioning with deep bidirectional LSTMs},  
    author={Wang, Cheng and Yang, Haojin and Bartz, Christian and Meinel, Christoph},  
